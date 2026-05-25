@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build Push and Deploy EC2
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build-push-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,3 +25,16 @@ jobs:
           context: .
           push: true
           tags: frankcoral/plataformaeducativa:latest
+
+      - name: Desplegar contenedor en EC2
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
+          chmod 600 ~/.ssh/ec2_key.pem
+
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            sudo docker pull frankcoral/plataformaeducativa:latest
+            sudo docker rm -f plataformaeducativa || true
+            sudo docker run -d --name plataformaeducativa -p 8080:8080 frankcoral/plataformaeducativa:latest
+            sudo docker ps
+          EOF
