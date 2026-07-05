@@ -1,11 +1,11 @@
 services:
-  plataformaeducativa:
-    image: frankcoral/plataformaeducativa:latest
-    container_name: plataformaeducativa
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-semana7
     ports:
-      - "8080:8080"
+      - "5672:5672"
+      - "15672:15672"
     environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     restart: unless-stopped
