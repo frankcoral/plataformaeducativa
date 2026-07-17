@@ -12,175 +12,171 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+        @Bean
+        public SecurityFilterChain securityFilterChain(
+                        HttpSecurity http,
+                        JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
 
-        http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
-                )
-                .authorizeHttpRequests(auth -> auth
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .sessionManagement(session -> session.sessionCreationPolicy(
+                                                SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
 
-                        // Endpoint técnico
-                        .requestMatchers("/error").permitAll()
+                                                // Endpoint técnico
+                                                .requestMatchers("/error").permitAll()
 
-                        // CURSOS
-                        // Ambos roles pueden consultar
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/cursos/**"
-                        ).hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
+                                                // Frontend público para iniciar sesión con Azure
+                                                .requestMatchers(
+                                                                "/",
+                                                                "/index.html",
+                                                                "/msal-browser.min.js",
+                                                                "/favicon.ico")
+                                                .permitAll()
 
-                        // Solo el instructor administra cursos
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/cursos/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // CURSOS
+                                                // Ambos roles pueden consultar
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/cursos/**")
+                                                .hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
 
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/cursos/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // Solo el instructor administra cursos
+                                                .requestMatchers(
+                                                                HttpMethod.POST,
+                                                                "/api/cursos/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/cursos/**"
-                        ).hasRole("INSTRUCTOR")
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/api/cursos/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        // INSCRIPCIONES
-                        .requestMatchers("/api/inscripciones/**")
-                        .hasRole("ESTUDIANTE")
+                                                .requestMatchers(
+                                                                HttpMethod.DELETE,
+                                                                "/api/cursos/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        // BFF
-                        .requestMatchers("/api/bff/**")
-                        .hasRole("ESTUDIANTE")
+                                                // INSCRIPCIONES
+                                                .requestMatchers("/api/inscripciones/**")
+                                                .hasRole("ESTUDIANTE")
 
-                        // RABBITMQ
-                        .requestMatchers("/api/resumenes-mq/**")
-                        .hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
+                                                // BFF
+                                                .requestMatchers("/api/bff/**")
+                                                .hasRole("ESTUDIANTE")
 
-                        // CONTENIDOS
-                        // Ambos roles pueden consultar
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/contenidos/**"
-                        ).hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
+                                                // RABBITMQ
+                                                .requestMatchers("/api/resumenes-mq/**")
+                                                .hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
 
-                        // Solo el instructor administra contenidos
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/contenidos/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // CONTENIDOS
+                                                // Ambos roles pueden consultar
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/contenidos/**")
+                                                .hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
 
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/contenidos/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // Solo el instructor administra contenidos
+                                                .requestMatchers(
+                                                                HttpMethod.POST,
+                                                                "/api/contenidos/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/contenidos/**"
-                        ).hasRole("INSTRUCTOR")
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/api/contenidos/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        // EVALUACIONES
-                        // El estudiante envía sus respuestas
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/evaluaciones/*/respuestas"
-                        ).hasRole("ESTUDIANTE")
+                                                .requestMatchers(
+                                                                HttpMethod.DELETE,
+                                                                "/api/contenidos/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        // Ambos roles consultan evaluaciones del curso
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/evaluaciones/curso/**"
-                        ).hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
+                                                // EVALUACIONES
+                                                // El estudiante envía sus respuestas
+                                                .requestMatchers(
+                                                                HttpMethod.POST,
+                                                                "/api/evaluaciones/*/respuestas")
+                                                .hasRole("ESTUDIANTE")
 
-                        // Solo el instructor consulta resultados
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/evaluaciones/*/resultados"
-                        ).hasRole("INSTRUCTOR")
+                                                // Ambos roles consultan evaluaciones del curso
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/evaluaciones/curso/**")
+                                                .hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
 
-                        // Solo el instructor crea evaluaciones
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/evaluaciones/curso/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // Solo el instructor consulta resultados
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/evaluaciones/*/resultados")
+                                                .hasRole("INSTRUCTOR")
 
-                        // Solo el instructor califica resultados
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/evaluaciones/resultados/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // Solo el instructor crea evaluaciones
+                                                .requestMatchers(
+                                                                HttpMethod.POST,
+                                                                "/api/evaluaciones/curso/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        // Solo el instructor actualiza evaluaciones
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/evaluaciones/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // Solo el instructor califica resultados
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/api/evaluaciones/resultados/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        // Solo el instructor elimina evaluaciones
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/evaluaciones/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // Solo el instructor actualiza evaluaciones
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/api/evaluaciones/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        // RESÚMENES Y ARCHIVOS S3
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/resumenes/**"
-                        ).hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
+                                                // Solo el instructor elimina evaluaciones
+                                                .requestMatchers(
+                                                                HttpMethod.DELETE,
+                                                                "/api/evaluaciones/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/resumenes/**"
-                        ).hasRole("INSTRUCTOR")
+                                                // RESÚMENES Y ARCHIVOS S3
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/resumenes/**")
+                                                .hasAnyRole("ESTUDIANTE", "INSTRUCTOR")
 
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/resumenes/**"
-                        ).hasRole("INSTRUCTOR")
+                                                .requestMatchers(
+                                                                HttpMethod.POST,
+                                                                "/api/resumenes/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/resumenes/**"
-                        ).hasRole("INSTRUCTOR")
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/api/resumenes/**")
+                                                .hasRole("INSTRUCTOR")
 
-                        // Cualquier otro endpoint exige autenticación
-                        .anyRequest().authenticated()
-                )
-                .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwt ->
-                                jwt.jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter
-                                )
-                        )
-                );
+                                                .requestMatchers(
+                                                                HttpMethod.DELETE,
+                                                                "/api/resumenes/**")
+                                                .hasRole("INSTRUCTOR")
 
-        return http.build();
-    }
+                                                // Cualquier otro endpoint exige autenticación
+                                                .anyRequest().authenticated())
+                                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(
+                                                jwtAuthenticationConverter)));
 
-    @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+                return http.build();
+        }
 
-        JwtGrantedAuthoritiesConverter rolesConverter =
-                new JwtGrantedAuthoritiesConverter();
+        @Bean
+        public JwtAuthenticationConverter jwtAuthenticationConverter() {
 
-        rolesConverter.setAuthoritiesClaimName("roles");
-        rolesConverter.setAuthorityPrefix("ROLE_");
+                JwtGrantedAuthoritiesConverter rolesConverter = new JwtGrantedAuthoritiesConverter();
 
-        JwtAuthenticationConverter authenticationConverter =
-                new JwtAuthenticationConverter();
+                rolesConverter.setAuthoritiesClaimName("roles");
+                rolesConverter.setAuthorityPrefix("ROLE_");
 
-        authenticationConverter.setJwtGrantedAuthoritiesConverter(
-                rolesConverter
-        );
+                JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
 
-        return authenticationConverter;
-    }
+                authenticationConverter.setJwtGrantedAuthoritiesConverter(
+                                rolesConverter);
+
+                return authenticationConverter;
+        }
 }

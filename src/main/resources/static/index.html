@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Plataforma Educativa Cloud Native</title>
+
+    <script
+      type="text/javascript"
+      src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"
+    ></script>
+
+    <style>
+      :root {
+        --azul: #2563eb;
+        --azul-oscuro: #1e3a8a;
+        --fondo: #f1f5f9;
+        --panel: #ffffff;
+        --texto: #172033;
+        --muted: #64748b;
+        --verde: #15803d;
+        --rojo: #b91c1c;
+        --borde: #dbe3ef;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Arial, Helvetica, sans-serif;
+        color: var(--texto);
+        background: var(--fondo);
+      }
+
+      header {
+        padding: 42px 24px;
+        color: white;
+        background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
+      }
+
+      header div {
+        max-width: 1100px;
+        margin: auto;
+      }
+
+      header h1 {
+        margin: 8px 0;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+      }
+
+      header p {
+        max-width: 760px;
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      .etiqueta {
+        font-weight: bold;
+        letter-spacing: 0.12rem;
+        text-transform: uppercase;
+        opacity: 0.85;
+      }
+
+      main {
+        width: min(1100px, calc(100% - 32px));
+        margin: 28px auto;
+        display: grid;
+        gap: 20px;
+      }
+
+      .panel {
+        padding: 24px;
+        border: 1px solid var(--borde);
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.07);
+      }
+
+      .panel h2 {
+        margin-top: 0;
+      }
+
+      .sesion,
+      .resultado-encabezado {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .botones-sesion,
+      .acciones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button {
+        padding: 11px 17px;
+        border: 0;
+        border-radius: 9px;
+        color: white;
+        background: var(--azul);
+        font-size: 0.95rem;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      button:hover {
+        filter: brightness(0.92);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      .secundario {
+        color: var(--texto);
+        background: #e2e8f0;
+      }
+
+      .cerrar {
+        background: var(--rojo);
+      }
+
+      .campos {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 7px;
+        font-weight: bold;
+      }
+
+      input {
+        width: 100%;
+        padding: 11px;
+        border: 1px solid var(--borde);
+        border-radius: 9px;
+        font-size: 1rem;
+      }
+
+      .estado {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 9px;
+        color: var(--muted);
+        background: #f8fafc;
+      }
+
+      .exito {
+        color: var(--verde);
+        background: #dcfce7;
+      }
+
+      .error {
+        color: var(--rojo);
+        background: #fee2e2;
+      }
+
+      .rol {
+        display: inline-block;
+        margin: 4px 5px 0 0;
+        padding: 5px 10px;
+        border-radius: 999px;
+        color: white;
+        background: var(--azul-oscuro);
+        font-size: 0.85rem;
+        font-weight: bold;
+      }
+
+      pre {
+        max-height: 440px;
+        margin: 18px 0 0;
+        padding: 18px;
+        overflow: auto;
+        border-radius: 12px;
+        color: #dbeafe;
+        background: #0f172a;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+
+      footer {
+        padding: 24px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      @media (max-width: 600px) {
+        header {
+          padding: 30px 20px;
+        }
+
+        .panel {
+          padding: 18px;
+        }
+
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div>
+        <p class="etiqueta">Duoc UC · Desarrollo Cloud Native</p>
+
+        <h1>Plataforma Educativa</h1>
+
+        <p>
+          Aplicación integrada con Microsoft Entra ID, Amazon API Gateway, EC2,
+          RabbitMQ, Oracle y Amazon S3.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <div class="sesion">
+          <div>
+            <h2>Autenticación con Azure</h2>
+
+            <p id="usuario">No se ha iniciado sesión.</p>
+
+            <div id="roles"></div>
+          </div>
+
+          <div class="botones-sesion">
+            <button id="iniciar-sesion" type="button">Iniciar sesión</button>
+
+            <button id="cerrar-sesion" class="cerrar" type="button" disabled>
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+
+        <div id="estado-sesion" class="estado">
+          Inicia sesión para consumir los servicios protegidos.
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Servicios de la plataforma</h2>
+
+        <div class="campos">
+          <div>
+            <label for="curso-id">ID del curso</label>
+            <input id="curso-id" type="number" min="1" value="21" />
+          </div>
+
+          <div>
+            <label for="inscripcion-id"> ID de inscripción </label>
+
+            <input id="inscripcion-id" type="number" min="1" value="61" />
+          </div>
+
+          <div>
+            <label for="evaluacion-id"> ID de evaluación </label>
+
+            <input id="evaluacion-id" type="number" min="1" value="1" />
+          </div>
+        </div>
+
+        <div class="acciones">
+          <button class="servicio" id="consultar-cursos" type="button" disabled>
+            Consultar cursos
+          </button>
+
+          <button
+            class="servicio"
+            id="consultar-contenidos"
+            type="button"
+            disabled
+          >
+            Consultar contenidos
+          </button>
+
+          <button
+            class="servicio"
+            id="consultar-evaluaciones"
+            type="button"
+            disabled
+          >
+            Consultar evaluaciones
+          </button>
+
+          <button class="servicio" id="procesar-bff" type="button" disabled>
+            Procesar resumen BFF
+          </button>
+
+          <button class="servicio" id="crear-contenido" type="button" disabled>
+            Crear contenido de prueba
+          </button>
+
+          <button
+            class="servicio"
+            id="consultar-resultados"
+            type="button"
+            disabled
+          >
+            Consultar resultados
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="resultado-encabezado">
+          <h2>Resultado</h2>
+
+          <button id="limpiar" class="secundario" type="button">Limpiar</button>
+        </div>
+
+        <div id="estado-operacion" class="estado">Esperando una operación.</div>
+
+        <pre id="resultado">Sin resultados todavía.</pre>
+      </section>
+    </main>
+
+    <footer>Plataforma Educativa Cloud Native · Frank Córdoba</footer>
+
+    <script>
+      const CLIENT_ID = "5142897a-f4fe-4ccc-ba52-44e5d94cbbb9";
+
+      const TENANT_ID = "28232852-5c34-4c13-98a4-1347012358a7";
+
+      const API_SCOPE =
+        "https://plataformaeducativafrank.onmicrosoft.com/" +
+        "616d04e3-2231-4aa0-bcda-5261e96dee8b/azure_aws";
+
+      /*
+       * El frontend y la API utilizan el mismo origen:
+       * - Local: http://localhost:8080
+       * - Cloud: URL de Amazon API Gateway
+       */
+      const API_BASE = window.location.origin;
+
+      const msalConfig = {
+        auth: {
+          clientId: CLIENT_ID,
+          authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+          redirectUri: `${window.location.origin}/`,
+          postLogoutRedirectUri: `${window.location.origin}/`,
+        },
+        cache: {
+          cacheLocation: "sessionStorage",
+          storeAuthStateInCookie: false,
+        },
+      };
+
+      const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+      let cuentaActiva = null;
+
+      const iniciarSesion = document.getElementById("iniciar-sesion");
+
+      const cerrarSesion = document.getElementById("cerrar-sesion");
+
+      const usuario = document.getElementById("usuario");
+
+      const roles = document.getElementById("roles");
+
+      const estadoSesion = document.getElementById("estado-sesion");
+
+      const estadoOperacion = document.getElementById("estado-operacion");
+
+      const resultado = document.getElementById("resultado");
+
+      function cambiarEstado(elemento, mensaje, tipo = "") {
+        elemento.textContent = mensaje;
+        elemento.className = `estado ${tipo}`.trim();
+      }
+
+      function habilitarServicios(habilitar) {
+        document.querySelectorAll(".servicio").forEach((boton) => {
+          boton.disabled = !habilitar;
+        });
+      }
+
+      function decodificarToken(token) {
+        try {
+          const parte = token
+            .split(".")[1]
+            .replace(/-/g, "+")
+            .replace(/_/g, "/");
+
+          const relleno = parte + "=".repeat((4 - (parte.length % 4)) % 4);
+
+          const bytes = Uint8Array.from(atob(relleno), (caracter) =>
+            caracter.charCodeAt(0),
+          );
+
+          return JSON.parse(new TextDecoder().decode(bytes));
+        } catch {
+          return {};
+        }
+      }
+
+      function mostrarCuenta(cuenta, token) {
+        const datosToken = decodificarToken(token);
+        const rolesToken = datosToken.roles || [];
+
+        cuentaActiva = cuenta;
+        msalInstance.setActiveAccount(cuenta);
+
+        usuario.textContent = `Sesión iniciada: ${cuenta.name || cuenta.username}`;
+
+        roles.innerHTML =
+          rolesToken.length > 0
+            ? rolesToken
+                .map((rol) => `<span class="rol">${rol}</span>`)
+                .join("")
+            : `<span class="rol">Sin rol asignado</span>`;
+
+        iniciarSesion.disabled = true;
+        cerrarSesion.disabled = false;
+
+        habilitarServicios(true);
+
+        cambiarEstado(
+          estadoSesion,
+          "Autenticación completada y token de acceso obtenido.",
+          "exito",
+        );
+      }
+
+      async function obtenerToken() {
+        if (!cuentaActiva) {
+          throw new Error("Debes iniciar sesión antes de consumir la API.");
+        }
+
+        const solicitud = {
+          scopes: [API_SCOPE],
+          account: cuentaActiva,
+        };
+
+        try {
+          return await msalInstance.acquireTokenSilent(solicitud);
+        } catch (error) {
+          return await msalInstance.acquireTokenPopup(solicitud);
+        }
+      }
+
+      async function autenticar() {
+        try {
+          cambiarEstado(estadoSesion, "Abriendo Microsoft Entra ID...");
+
+          const respuestaLogin = await msalInstance.loginPopup({
+            scopes: ["openid", "profile", API_SCOPE],
+            prompt: "select_account",
+          });
+
+          cuentaActiva = respuestaLogin.account;
+
+          const respuestaToken = await obtenerToken();
+
+          mostrarCuenta(respuestaLogin.account, respuestaToken.accessToken);
+        } catch (error) {
+          console.error(error);
+
+          cambiarEstado(
+            estadoSesion,
+            `No fue posible iniciar sesión: ${error.message}`,
+            "error",
+          );
+        }
+      }
+
+      async function salir() {
+        try {
+          const cuenta = cuentaActiva;
+
+          cuentaActiva = null;
+
+          await msalInstance.logoutPopup({
+            account: cuenta,
+            postLogoutRedirectUri: `${window.location.origin}/`,
+          });
+
+          usuario.textContent = "No se ha iniciado sesión.";
+
+          roles.innerHTML = "";
+
+          iniciarSesion.disabled = false;
+          cerrarSesion.disabled = true;
+
+          habilitarServicios(false);
+
+          cambiarEstado(estadoSesion, "La sesión fue cerrada correctamente.");
+        } catch (error) {
+          console.error(error);
+
+          cambiarEstado(
+            estadoSesion,
+            `No fue posible cerrar sesión: ${error.message}`,
+            "error",
+          );
+        }
+      }
+
+      async function consumirApi(ruta, opciones = {}) {
+        try {
+          cambiarEstado(estadoOperacion, "Procesando solicitud...");
+
+          resultado.textContent = "Cargando...";
+
+          const respuestaToken = await obtenerToken();
+
+          const encabezados = {
+            Authorization: `Bearer ${respuestaToken.accessToken}`,
+            ...(opciones.headers || {}),
+          };
+
+          if (opciones.body && !(opciones.body instanceof FormData)) {
+            encabezados["Content-Type"] = "application/json";
+          }
+
+          const respuesta = await fetch(`${API_BASE}${ruta}`, {
+            ...opciones,
+            headers: encabezados,
+          });
+
+          const tipoContenido = respuesta.headers.get("content-type") || "";
+
+          let contenido;
+
+          if (tipoContenido.includes("application/json")) {
+            contenido = await respuesta.json();
+          } else {
+            contenido = await respuesta.text();
+          }
+
+          const presentacion = {
+            estadoHttp: `${respuesta.status} ${respuesta.statusText}`,
+            respuesta: contenido,
+          };
+
+          resultado.textContent = JSON.stringify(presentacion, null, 2);
+
+          if (respuesta.ok) {
+            cambiarEstado(
+              estadoOperacion,
+              `Operación completada: HTTP ${respuesta.status}`,
+              "exito",
+            );
+          } else {
+            cambiarEstado(
+              estadoOperacion,
+              `Acceso rechazado o error: HTTP ${respuesta.status}`,
+              "error",
+            );
+          }
+        } catch (error) {
+          console.error(error);
+
+          resultado.textContent = error.stack || error.message;
+
+          cambiarEstado(estadoOperacion, `Error: ${error.message}`, "error");
+        }
+      }
+
+      iniciarSesion.addEventListener("click", autenticar);
+
+      cerrarSesion.addEventListener("click", salir);
+
+      document
+        .getElementById("consultar-cursos")
+        .addEventListener("click", () => {
+          consumirApi("/api/cursos");
+        });
+
+      document
+        .getElementById("consultar-contenidos")
+        .addEventListener("click", () => {
+          const idCurso = document.getElementById("curso-id").value;
+
+          consumirApi(`/api/contenidos/curso/${idCurso}`);
+        });
+
+      document
+        .getElementById("consultar-evaluaciones")
+        .addEventListener("click", () => {
+          const idCurso = document.getElementById("curso-id").value;
+
+          consumirApi(`/api/evaluaciones/curso/${idCurso}`);
+        });
+
+      document.getElementById("procesar-bff").addEventListener("click", () => {
+        const idInscripcion = document.getElementById("inscripcion-id").value;
+
+        consumirApi(
+          `/api/bff/inscripciones/` + `${idInscripcion}/procesar-resumen`,
+          {
+            method: "POST",
+          },
+        );
+      });
+
+      document
+        .getElementById("crear-contenido")
+        .addEventListener("click", () => {
+          const idCurso = document.getElementById("curso-id").value;
+
+          const contenido = {
+            titulo: `Contenido frontend ${new Date().toLocaleTimeString()}`,
+            descripcion: "Contenido creado desde el frontend autenticado.",
+            tipo: "DOCUMENTO",
+            urlRecurso: "https://ejemplo.com/frontend-cloud-native",
+          };
+
+          consumirApi(`/api/contenidos/curso/${idCurso}`, {
+            method: "POST",
+            body: JSON.stringify(contenido),
+          });
+        });
+
+      document
+        .getElementById("consultar-resultados")
+        .addEventListener("click", () => {
+          const idEvaluacion = document.getElementById("evaluacion-id").value;
+
+          consumirApi(`/api/evaluaciones/` + `${idEvaluacion}/resultados`);
+        });
+
+      document.getElementById("limpiar").addEventListener("click", () => {
+        resultado.textContent = "Sin resultados todavía.";
+
+        cambiarEstado(estadoOperacion, "Esperando una operación.");
+      });
+
+      /*
+       * Recupera una cuenta existente mientras siga activa
+       * la sesión del navegador.
+       */
+      const cuentasGuardadas = msalInstance.getAllAccounts();
+
+      if (cuentasGuardadas.length > 0) {
+        cuentaActiva = cuentasGuardadas[0];
+
+        obtenerToken()
+          .then((respuesta) => {
+            mostrarCuenta(cuentaActiva, respuesta.accessToken);
+          })
+          .catch(() => {
+            cuentaActiva = null;
+            habilitarServicios(false);
+          });
+      }
+    </script>
+  </body>
+</html>
