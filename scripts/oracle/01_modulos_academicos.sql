@@ -1,0 +1,85 @@
+-- ============================================================
+-- Plataforma Educativa Cloud Native
+-- Script Oracle: contenidos, evaluaciones y resultados
+-- ============================================================
+-- ------------------------------------------------------------
+-- SECUENCIAS
+-- ------------------------------------------------------------
+CREATE SEQUENCE SEQ_CONTENIDO START
+WITH
+    1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+CREATE SEQUENCE SEQ_EVALUACION START
+WITH
+    1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+CREATE SEQUENCE SEQ_RESULTADO_EVALUACION START
+WITH
+    1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+-- ------------------------------------------------------------
+-- TABLA CONTENIDOS
+-- ------------------------------------------------------------
+CREATE TABLE
+    CONTENIDOS (
+        ID_CONTENIDO NUMBER (19) NOT NULL,
+        TITULO VARCHAR2 (150) NOT NULL,
+        DESCRIPCION VARCHAR2 (500) NOT NULL,
+        TIPO VARCHAR2 (50) NOT NULL,
+        URL_RECURSO VARCHAR2 (500) NOT NULL,
+        ID_CURSO NUMBER (19) NOT NULL,
+        CONSTRAINT PK_CONTENIDOS PRIMARY KEY (ID_CONTENIDO),
+        CONSTRAINT FK_CONTENIDOS_CURSO FOREIGN KEY (ID_CURSO) REFERENCES CURSOS (ID_CURSO)
+    );
+
+-- ------------------------------------------------------------
+-- TABLA EVALUACIONES
+-- ------------------------------------------------------------
+CREATE TABLE
+    EVALUACIONES (
+        ID_EVALUACION NUMBER (19) NOT NULL,
+        TITULO VARCHAR2 (150) NOT NULL,
+        INSTRUCCIONES VARCHAR2 (1000) NOT NULL,
+        PUNTAJE_MAXIMO NUMBER (10) NOT NULL,
+        ACTIVO NUMBER (1) DEFAULT 1 NOT NULL,
+        ID_CURSO NUMBER (19) NOT NULL,
+        CONSTRAINT PK_EVALUACIONES PRIMARY KEY (ID_EVALUACION),
+        CONSTRAINT CK_EVALUACIONES_ACTIVO CHECK (ACTIVO IN (0, 1)),
+        CONSTRAINT CK_EVALUACIONES_PUNTAJE CHECK (PUNTAJE_MAXIMO > 0),
+        CONSTRAINT FK_EVALUACIONES_CURSO FOREIGN KEY (ID_CURSO) REFERENCES CURSOS (ID_CURSO)
+    );
+
+-- ------------------------------------------------------------
+-- TABLA RESULTADOS DE EVALUACIÓN
+-- ------------------------------------------------------------
+CREATE TABLE
+    RESULTADOS_EVALUACION (
+        ID_RESULTADO NUMBER (19) NOT NULL,
+        ESTUDIANTE_ID VARCHAR2 (100) NOT NULL,
+        RESPUESTAS VARCHAR2 (4000) NOT NULL,
+        NOTA NUMBER (3, 1),
+        RETROALIMENTACION VARCHAR2 (1000),
+        ESTADO VARCHAR2 (30) DEFAULT 'ENVIADO' NOT NULL,
+        FECHA_ENVIO TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        FECHA_CALIFICACION TIMESTAMP,
+        ID_EVALUACION NUMBER (19) NOT NULL,
+        CONSTRAINT PK_RESULTADOS_EVALUACION PRIMARY KEY (ID_RESULTADO),
+        CONSTRAINT CK_RESULTADOS_NOTA CHECK (
+            NOTA IS NULL
+            OR NOTA BETWEEN 1.0 AND 7.0
+        ),
+        CONSTRAINT CK_RESULTADOS_ESTADO CHECK (ESTADO IN ('ENVIADO', 'CALIFICADO')),
+        CONSTRAINT UK_RESULTADO_ESTUDIANTE UNIQUE (ID_EVALUACION, ESTUDIANTE_ID),
+        CONSTRAINT FK_RESULTADOS_EVALUACION FOREIGN KEY (ID_EVALUACION) REFERENCES EVALUACIONES (ID_EVALUACION)
+    );
+
+-- ------------------------------------------------------------
+-- ÍNDICES
+-- ------------------------------------------------------------
+CREATE INDEX IDX_CONTENIDOS_CURSO ON CONTENIDOS (ID_CURSO);
+
+CREATE INDEX IDX_EVALUACIONES_CURSO ON EVALUACIONES (ID_CURSO);
+
+CREATE INDEX IDX_RESULTADOS_EVALUACION ON RESULTADOS_EVALUACION (ID_EVALUACION);
+
+COMMIT;
