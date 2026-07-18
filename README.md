@@ -368,7 +368,7 @@ No se deben almacenar nuevas credenciales personales directamente en el reposito
 
 ```bash
 ./mvnw spring-boot:run
-```
+```  
 
 ### 5. Abrir el frontend
 

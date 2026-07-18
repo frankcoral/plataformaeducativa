@@ -313,6 +313,15 @@
           >
             Consultar resultados
           </button>
+
+          <button
+            class="servicio"
+            id="calificar-resultado"
+            type="button"
+            disabled
+          >
+            Calificar resultado de prueba
+          </button>
         </div>
       </section>
 
@@ -632,6 +641,23 @@
           const idEvaluacion = document.getElementById("evaluacion-id").value;
 
           consumirApi(`/api/evaluaciones/` + `${idEvaluacion}/resultados`);
+        });
+
+      document
+        .getElementById("calificar-resultado")
+        .addEventListener("click", () => {
+          const idResultado = 1;
+
+          const calificacion = {
+            nota: 7.0,
+            retroalimentacion:
+              "Evaluación calificada desde el frontend cloud por Instructor Demo.",
+          };
+
+          consumirApi(`/api/evaluaciones/resultados/${idResultado}/calificar`, {
+            method: "PUT",
+            body: JSON.stringify(calificacion),
+          });
         });
 
       document.getElementById("limpiar").addEventListener("click", () => {
