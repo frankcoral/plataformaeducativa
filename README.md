@@ -13,7 +13,8 @@ La implementación incluye:
 - Backend desarrollado con Spring Boot.
 - Frontend web integrado dentro de la aplicación.
 - Autenticación del frontend y backend con Microsoft Entra ID.
-- Roles `ESTUDIANTE` e `INSTRUCTOR`.
+- Usuarios internos de demostración separados para los roles `ESTUDIANTE` e `INSTRUCTOR`.
+- Autorización por rol validada desde el frontend cloud con respuestas HTTP 200, 201 y 403.
 - Persistencia de información académica en Oracle.
 - Productor y consumidor de mensajes con RabbitMQ.
 - BFF para procesar resúmenes de inscripciones.
@@ -142,6 +143,17 @@ y los transforma en autoridades con el prefijo:
 ROLE_
 ```
 
+### Usuarios demostrativos
+
+Para validar la autenticación interactiva del frontend se configuraron dos usuarios internos dentro del tenant de Microsoft Entra ID:
+
+| Usuario de demostración | Rol asignado | Validación principal |
+|---|---|---|
+| Estudiante Demo | `ESTUDIANTE` | Consulta servicios académicos y ejecuta el BFF; recibe `HTTP 403` al intentar crear contenidos. |
+| Instructor Demo | `INSTRUCTOR` | Crea contenidos, consulta resultados y califica evaluaciones; recibe `HTTP 403` al intentar ejecutar el BFF. |
+
+Las contraseñas y demás credenciales se administran de forma privada en Microsoft Entra ID y **no se almacenan en el repositorio ni en este README**. Para la evaluación se entregan por un canal separado.
+
 ---
 
 ## Roles y permisos
@@ -173,7 +185,7 @@ No puede:
 El rol `INSTRUCTOR` puede:
 
 - Consultar cursos.
-- Crear y administrar cursos.
+- Crear cursos y consultar su información.
 - Consultar contenidos.
 - Crear, modificar y eliminar contenidos.
 - Crear y administrar evaluaciones.
@@ -183,6 +195,19 @@ El rol `INSTRUCTOR` puede:
 - Subir, reemplazar y eliminar archivos en Amazon S3.
 
 No puede ejecutar el BFF reservado para estudiantes.
+
+### Validación funcional de autorización
+
+| Usuario | Operación desde el frontend cloud | Resultado esperado y obtenido |
+|---|---|---|
+| Estudiante Demo | Crear contenido | `HTTP 403 Forbidden` |
+| Estudiante Demo | Procesar resumen mediante BFF | `HTTP 200 OK` |
+| Instructor Demo | Crear contenido | `HTTP 201 Created` |
+| Instructor Demo | Procesar resumen mediante BFF | `HTTP 403 Forbidden` |
+| Instructor Demo | Consultar resultados | `HTTP 200 OK` |
+| Instructor Demo | Calificar resultado | `HTTP 200 OK` |
+
+Estas pruebas confirman que el rol incluido en el token JWT es validado tanto por Amazon API Gateway como por Spring Security.
 
 ---
 
@@ -205,6 +230,7 @@ https://uj04zxa1xh.execute-api.us-east-1.amazonaws.com
 | Método | Endpoint | Rol |
 |---|---|---|
 | GET | `/api/cursos` | ESTUDIANTE / INSTRUCTOR |
+| GET | `/api/cursos/{id}` | ESTUDIANTE / INSTRUCTOR |
 | POST | `/api/cursos` | INSTRUCTOR |
 
 ### Inscripciones
@@ -219,6 +245,8 @@ https://uj04zxa1xh.execute-api.us-east-1.amazonaws.com
 |---|---|---|
 | GET | `/api/contenidos/curso/{idCurso}` | ESTUDIANTE / INSTRUCTOR |
 | POST | `/api/contenidos/curso/{idCurso}` | INSTRUCTOR |
+| PUT | `/api/contenidos/{idContenido}` | INSTRUCTOR |
+| DELETE | `/api/contenidos/{idContenido}` | INSTRUCTOR |
 
 ### Evaluaciones
 
@@ -228,6 +256,8 @@ https://uj04zxa1xh.execute-api.us-east-1.amazonaws.com
 | POST | `/api/evaluaciones/curso/{idCurso}` | INSTRUCTOR |
 | POST | `/api/evaluaciones/{idEvaluacion}/respuestas` | ESTUDIANTE |
 | GET | `/api/evaluaciones/{idEvaluacion}/resultados` | INSTRUCTOR |
+| PUT | `/api/evaluaciones/{idEvaluacion}` | INSTRUCTOR |
+| DELETE | `/api/evaluaciones/{idEvaluacion}` | INSTRUCTOR |
 | PUT | `/api/evaluaciones/resultados/{idResultado}/calificar` | INSTRUCTOR |
 
 ### BFF
@@ -308,10 +338,11 @@ La interfaz permite:
 - Consultar cursos.
 - Consultar contenidos.
 - Consultar evaluaciones.
-- Ejecutar el BFF.
-- Crear contenido de prueba.
-- Consultar resultados.
-- Mostrar respuestas HTTP exitosas o denegadas.
+- Crear contenido de prueba con el rol `INSTRUCTOR`.
+- Consultar resultados de evaluaciones.
+- Calificar un resultado desde el frontend con nota y retroalimentación.
+- Ejecutar el BFF con el rol `ESTUDIANTE`.
+- Mostrar respuestas HTTP exitosas o denegadas para comparar permisos (`200`, `201` y `403`).
 
 ---
 
@@ -391,7 +422,7 @@ y una base de datos H2 en memoria con compatibilidad para Oracle.
 Archivo de configuración:
 
 ```text
-src/test/resources/application-test.properties
+src/main/resources/application-test.properties
 ```
 
 Ejecutar las pruebas en Windows:
@@ -588,11 +619,11 @@ plataformaeducativa
 │   │   └── resources
 │   │       ├── static
 │   │       │   └── index.html
+│   │       ├── application-test.properties
 │   │       └── application.properties
 │   └── test
-│       ├── java
-│       └── resources
-│           └── application-test.properties
+│       └── java
+│           └── cl.duoc.plataformaeducativa
 ├── Dockerfile
 ├── docker-compose.yml
 ├── mvnw
@@ -607,8 +638,17 @@ plataformaeducativa
 
 Durante la validación se comprobaron los siguientes escenarios:
 
-- Inicio de sesión del frontend con Microsoft Entra ID.
-- Reconocimiento del rol `ESTUDIANTE`.
+- Creación de usuarios internos de demostración en Microsoft Entra ID.
+- Asignación independiente de los roles `ESTUDIANTE` e `INSTRUCTOR`.
+- Inicio de sesión del usuario Estudiante Demo desde el frontend cloud.
+- Inicio de sesión del usuario Instructor Demo desde el frontend cloud.
+- Reconocimiento de ambos roles desde los tokens JWT.
+- Creación de contenido denegada al Estudiante Demo con `HTTP 403`.
+- Creación de contenido autorizada al Instructor Demo con `HTTP 201`.
+- Ejecución del BFF autorizada al Estudiante Demo con `HTTP 200`.
+- Ejecución del BFF denegada al Instructor Demo con `HTTP 403`.
+- Consulta de resultados autorizada al Instructor Demo con `HTTP 200`.
+- Calificación de evaluación realizada desde el frontend por Instructor Demo con `HTTP 200`.
 - Consulta de cursos y contenidos desde el frontend.
 - Creación de cursos con el rol `INSTRUCTOR`.
 - Denegación de creación de cursos para `ESTUDIANTE`.
@@ -624,7 +664,8 @@ Durante la validación se comprobaron los siguientes escenarios:
 - Generación de archivos.
 - Carga, descarga y reemplazo de archivos en S3.
 - Consulta de servicios mediante API Gateway.
-- Despliegue exitoso mediante GitHub Actions.
+- Despliegue inicial exitoso mediante GitHub Actions.
+- Nuevo despliegue CI/CD exitoso después de incorporar la calificación desde el frontend.
 - Ejecución exitosa de pruebas con H2.
 - Frontend operativo desde la URL cloud.
 
